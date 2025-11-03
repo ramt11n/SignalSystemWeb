@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 # Import routers
-from api.v1 import properties, laplace, convolution
+from api.v1 import properties, laplace, convolution, lti
 
 app = FastAPI(
     title="Signal Companion API",
