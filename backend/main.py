@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(properties.router, prefix="/api/v1/properties", tags=["properties"])
 app.include_router(laplace.router, prefix="/api/v1/laplace", tags=["laplace"])
 app.include_router(convolution.router, prefix="/api/v1/convolution", tags=["convolution"])
+app.include_router(lti.router, prefix="/api/v1/lti", tags=["lti"])
 
 @app.get("/")
 async def root():
