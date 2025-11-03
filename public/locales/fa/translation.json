@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "title": "همراه سیگنال",
+    "module1": "کتابخانه سیگنال",
+    "module2": "تحلیل‌گر خواص",
+    "module3": "موتور کانولوشن",
+    "module4": "ماشین حساب لاپلاس",
+    "module5": "ماشین حساب لاپلاس معکوس",
+    "module6": "تحلیل‌گر LTI"
+  },
+  "sidebar": {
+    "modules": "ماژول‌ها",
+    "language": "زبان"
+  },
+  "properties": {
+    "linearity": "خطی بودن",
+    "causality": "علیت",
+    "stability": "پایداری",
+    "memory": "حافظه",
+    "timeInvariance": "عدم تغییر با زمان"
+  },
+  "results": {
+    "yes": "بله",
+    "no": "خیر",
+    "linear": "خطی",
+    "nonLinear": "غیرخطی",
+    "causal": "علّی",
+    "nonCausal": "غیرعلّی",
+    "stable": "پایدار",
+    "unstable": "ناپایدار",
+    "memoryless": "بدون حافظه",
+    "hasMemory": "دارای حافظه",
+    "timeInvariant": "ثابت با زمان",
+    "timeVariant": "متغیر با زمان"
+  },
+  "explanations": {
+    "nonLinearSquare": "سیستم غیرخطی است زیرا جمله x[n]^2 اصل جمع‌پذیری را نقض می‌کند.",
+    "causalPastInput": "سیستم علّی است زیرا خروجی فقط به ورودی‌های گذشته و حال وابسته است.",
+    "unstableRamp": "سیستم ناپایدار است زیرا تابع شیب بدون محدودیت رشد می‌کند.",
+    "memoryPastInput": "سیستم دارای حافظه است زیرا خروجی به مقادیر ورودی گذشته وابسته است.",
+    "memorylessCurrent": "سیستم بدون حافظه است زیرا خروجی فقط به ورودی فعلی وابسته است.",
+    "timeInvariant": "سیستم ثابت با زمان است زیرا شیاف‌های زمانی در ورودی شیاف‌های مشابهی در خروجی تولید می‌کنند.",
+    "timeVariant": "سیستم متغیر با زمان است زیرا پارامترهای سیستم با زمان تغییر می‌کنند."
+  },
+  "buttons": {
+    "calculate": "محاسبه",
+    "calculateConvolution": "محاسبه کانولوشن",
+    "transform": "تبدیل",
+    "inverseTransform": "تبدیل معکوس",
+    "analyze": "تحلیل",
+    "clear": "پاک کردن",
+    "play": "پخش",
+    "pause": "توقف",
+    "reset": "بازنشانی"
+  },
+  "labels": {
+    "signalX": "سیگنال x(t)",
+    "signalH": "سیگنال h(t)",
+    "expression": "عبارت",
+    "equation": "معادله سیستم",
+    "result": "نتیجه",
+    "enterExpression": "عبارت را وارد کنید",
+    "enterEquation": "معادله سیستم را وارد کنید",
+    "regionOfConvergence": "ناحیه همگرایی",
+    "poles": "قطب‌ها",
+    "zeros": "صفر‌ها",
+    "frequencyResponse": "پاسخ فرکانسی",
+    "stepResponse": "پاسخ پله",
+    "impulseResponse": "پاسخ ضربه"
+  },
+  "plots": {
+    "convolutionAnimation": "انیمیشن کانولوشن",
+    "signalPlot": "نمودار سیگنال",
+    "frequencyResponse": "پاسخ فرکانسی",
+    "poleZeroPlot": "نمودار قطب-صفر",
+    "magnitudeResponse": "پاسخ دامنه",
+    "phaseResponse": "پاسخ فاز"
+  },
+  "signals": {
+    "unitStep": "پله واحد",
+    "unitImpulse": "ضربه واحد",
+    "sinusoidal": "سینوسی",
+    "exponential": "توانی",
+    "ramp": "شیب"
+  },
+  "signalDescriptions": {
+    "unitStep": "تابع پله واحد u(t) برای t < 0 برابر 0 و برای t ≥ 0 برابر 1 است.",
+    "unitImpulse": "تابع دلتای دیراک δ(t) در همه جا صفر است به جز در t = 0 که بی‌نهایت است.",
+    "sinusoidal": "یک سیگنال سینوسی به شکل A·sin(ωt + φ)، که A دامنه، ω فرکانس زاویه‌ای و φ فاز است.",
+    "exponential": "یک سیگنال توانی به شکل A·e^(αt)، که A دامنه و α رشد/زوال را تعیین می‌کند.",
+    "ramp": "تابع شیب r(t) برای t < 0 برابر 0 و برای t ≥ 0 برابر t است."
+  },
+  "footer": {
+    "designedBy": "طراحی شده توسط رامتین نشاط ور"
+  },
+  "common": {
+    "loading": "در حال بارگذاری...",
+    "error": "خطا",
+    "success": "موفقیت",
+    "invalidExpression": "عبارت نامعتبر",
+    "calculationComplete": "محاسبه کامل شد",
+    "noData": "داده‌ای برای نمایش وجود ندارد"
+  }
+}
