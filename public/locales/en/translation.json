@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "title": "Signal Companion",
+    "module1": "Signal Library",
+    "module2": "Property Analyzer",
+    "module3": "Convolution Engine",
+    "module4": "Laplace Calculator",
+    "module5": "Inverse Laplace Calculator",
+    "module6": "LTI Analyzer"
+  },
+  "sidebar": {
+    "modules": "Modules",
+    "language": "Language"
+  },
+  "properties": {
+    "linearity": "Linearity",
+    "causality": "Causality",
+    "stability": "Stability",
+    "memory": "Memory",
+    "timeInvariance": "Time Invariance"
+  },
+  "results": {
+    "yes": "Yes",
+    "no": "No",
+    "linear": "Linear",
+    "nonLinear": "Non-Linear",
+    "causal": "Causal",
+    "nonCausal": "Non-Causal",
+    "stable": "Stable",
+    "unstable": "Unstable",
+    "memoryless": "Memoryless",
+    "hasMemory": "Has Memory",
+    "timeInvariant": "Time Invariant",
+    "timeVariant": "Time Variant"
+  },
+  "explanations": {
+    "nonLinearSquare": "The system is non-linear because the x[n]^2 term violates the additivity principle.",
+    "causalPastInput": "The system is causal because output depends only on past and present inputs.",
+    "unstableRamp": "The system is unstable because the ramp function grows without bound.",
+    "memoryPastInput": "The system has memory because output depends on past input values.",
+    "memorylessCurrent": "The system is memoryless because output depends only on current input.",
+    "timeInvariant": "The system is time-invariant because time shifts in input produce identical shifts in output.",
+    "timeVariant": "The system is time-variant because the system parameters change with time."
+  },
+  "buttons": {
+    "calculate": "Calculate",
+    "calculateConvolution": "Calculate Convolution",
+    "transform": "Transform",
+    "inverseTransform": "Inverse Transform",
+    "analyze": "Analyze",
+    "clear": "Clear",
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset"
+  },
+  "labels": {
+    "signalX": "Signal x(t)",
+    "signalH": "Signal h(t)",
+    "expression": "Expression",
+    "equation": "System Equation",
+    "result": "Result",
+    "enterExpression": "Enter expression",
+    "enterEquation": "Enter system equation",
+    "regionOfConvergence": "Region of Convergence",
+    "poles": "Poles",
+    "zeros": "Zeros",
+    "frequencyResponse": "Frequency Response",
+    "stepResponse": "Step Response",
+    "impulseResponse": "Impulse Response"
+  },
+  "plots": {
+    "convolutionAnimation": "Convolution Animation",
+    "signalPlot": "Signal Plot",
+    "frequencyResponse": "Frequency Response",
+    "poleZeroPlot": "Pole-Zero Plot",
+    "magnitudeResponse": "Magnitude Response",
+    "phaseResponse": "Phase Response"
+  },
+  "signals": {
+    "unitStep": "Unit Step",
+    "unitImpulse": "Unit Impulse",
+    "sinusoidal": "Sinusoidal",
+    "exponential": "Exponential",
+    "ramp": "Ramp"
+  },
+  "signalDescriptions": {
+    "unitStep": "The unit step function u(t) is 0 for t < 0 and 1 for t ≥ 0.",
+    "unitImpulse": "The Dirac delta function δ(t) is zero everywhere except at t = 0, where it is infinite.",
+    "sinusoidal": "A sinusoidal signal of the form A·sin(ωt + φ), where A is amplitude, ω is angular frequency, and φ is phase.",
+    "exponential": "An exponential signal of the form A·e^(αt), where A is amplitude and α determines growth/decay.",
+    "ramp": "The ramp function r(t) is 0 for t < 0 and t for t ≥ 0."
+  },
+  "footer": {
+    "designedBy": "Designed By Ramtin Neshatvar"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "invalidExpression": "Invalid expression",
+    "calculationComplete": "Calculation complete",
+    "noData": "No data to display"
+  }
+}
