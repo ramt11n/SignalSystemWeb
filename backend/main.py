@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import uvicorn
+import os  # 1. IMPORT OS
 
 # Import routers
 from api.v1 import properties, laplace, convolution, lti
@@ -12,10 +12,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# 2. DEFINE ALL YOUR ALLOWED ORIGINS
+origins = [
+    "http://localhost:5173",       # Your local React app
+    "http://127.0.0.1:5173",      # Just in case
+    "https://ramt11n.github.io",   # Your deployed GitHub Pages site
+]
+
+# 3. ADD YOUR DEPLOYED SERVER'S URL (from environment variable)
+# This allows requests from your deployed Liara/PythonAnywhere server
+prod_origin = os.getenv("CORS_ORIGIN")
+if prod_origin:
+    origins.append(prod_origin)
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # React dev servers
+    allow_origins=origins, # 4. USE THE FULL 'origins' LIST
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

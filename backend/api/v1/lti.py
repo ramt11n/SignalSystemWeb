@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from services.math_engine import math_engine
-from models.schemas import LTIAnalysisRequest, LTIAnalysisResponse, FrequencyResponse, StepResponse
+# 1. IMPORT THE NEW MODEL
+from models.schemas import (
+    LTIAnalysisRequest, LTIAnalysisResponse, 
+    FrequencyResponse, StepResponse, ImpulseResponse
+)
 
 router = APIRouter()
 
@@ -14,6 +18,7 @@ async def analyze_lti_system(request: LTIAnalysisRequest):
     Returns system analysis including poles, zeros, stability, and frequency response.
     """
     try:
+        # This function must return 'impulseResponse' as well
         result = math_engine.analyze_lti_system(request.transfer_function)
 
         # Convert to response model format
@@ -27,6 +32,12 @@ async def analyze_lti_system(request: LTIAnalysisRequest):
             time=result['stepResponse']['time'],
             response=result['stepResponse']['response']
         )
+        
+        # 2. ADD THIS SECTION FOR IMPULSE RESPONSE
+        impulse_response = ImpulseResponse(
+            time=result['impulseResponse']['time'],
+            response=result['impulseResponse']['response']
+        )
 
         response = LTIAnalysisResponse(
             transfer_function=result['transfer_function'],
@@ -36,7 +47,8 @@ async def analyze_lti_system(request: LTIAnalysisRequest):
             type=result['type'],
             dcGain=result['dcGain'],
             frequencyResponse=frequency_response,
-            stepResponse=step_response
+            stepResponse=step_response,
+            impulseResponse=impulse_response # 3. ADD IT TO THE RESPONSE
         )
 
         return response

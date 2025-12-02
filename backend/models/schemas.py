@@ -1,22 +1,38 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
+# --- Property Analyzer Models ---
 # Property Analyzer Models
 class PropertyAnalysisRequest(BaseModel):
     equation_str: str
-
-class PropertyResult(BaseModel):
+class LinearityResult(BaseModel):
     is_linear: bool
     reason_key: str
 
-class PropertyAnalysisResponse(BaseModel):
-    linearity: PropertyResult
-    causality: PropertyResult
-    stability: PropertyResult
-    memory: PropertyResult
-    time_invariance: PropertyResult
+class CausalityResult(BaseModel):
+    is_causal: bool
+    reason_key: str
 
-# Laplace Transform Models
+class StabilityResult(BaseModel):
+    is_stable: bool
+    reason_key: str
+
+class MemoryResult(BaseModel):
+    has_memory: bool
+    reason_key: str
+
+class TimeInvarianceResult(BaseModel):
+    is_invariant: bool
+    reason_key: str
+
+class PropertyAnalysisResponse(BaseModel):
+    linearity: LinearityResult
+    causality: CausalityResult
+    stability: StabilityResult
+    memory: MemoryResult
+    time_invariance: TimeInvarianceResult
+
+# --- Laplace Transform Models ---
 class LaplaceTransformRequest(BaseModel):
     expression_t: str
 
@@ -24,10 +40,10 @@ class LaplaceTransformResponse(BaseModel):
     input_t: str
     output_s: str
     roc: str
-    poles: List[float]
-    zeros: List[float]
+    poles: List[str]
+    zeros: List[str]
 
-# Inverse Laplace Transform Models
+# --- Inverse Laplace Transform Models ---
 class InverseLaplaceRequest(BaseModel):
     expression_s: str
     is_causal: bool = True
@@ -42,7 +58,7 @@ class InverseLaplaceResponse(BaseModel):
     steps: List[InverseStep]
     is_causal: bool
 
-# Convolution Models
+# --- Convolution Models ---
 class ConvolutionRequest(BaseModel):
     signal_x: str
     signal_h: str
@@ -54,7 +70,7 @@ class ConvolutionResponse(BaseModel):
     output_y_array: List[float]
     symbolic_result: str
 
-# LTI Analyzer Models
+# --- LTI Analyzer Models ---
 class LTIAnalysisRequest(BaseModel):
     transfer_function: str
 
@@ -67,17 +83,22 @@ class StepResponse(BaseModel):
     time: List[float]
     response: List[float]
 
+class ImpulseResponse(BaseModel):
+    time: List[float]
+    response: List[float]
+
 class LTIAnalysisResponse(BaseModel):
     transfer_function: str
-    poles: List[float]
-    zeros: List[float]
+    poles: List[str]
+    zeros: List[str]
     stability: str
     type: str
     dcGain: float
     frequencyResponse: FrequencyResponse
     stepResponse: StepResponse
+    impulseResponse: ImpulseResponse
 
-# Generic Error Response
+# --- Generic Error Response ---
 class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None

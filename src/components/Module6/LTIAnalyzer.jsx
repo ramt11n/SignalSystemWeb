@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import axios from 'axios'; // 1. IMPORT AXIOS
 import { Container, Row, Col, Form, Button, Card, Spinner, Tabs, Tab } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import Plot from 'react-plotly.js';
+
+// 2. GET THE API URL FROM YOUR .env FILE
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const LTIAnalyzer = () => {
   const { t } = useTranslation();
@@ -20,153 +24,23 @@ const LTIAnalyzer = () => {
     setError('');
 
     try {
-      // Mock LTI analysis - in production, this would call the backend API
-      const mockResult = analyzeMockLTI(transferFunction);
-      setResult(mockResult);
+      // 3. THIS IS THE REAL API CALL (REPLACES THE MOCK)
+      const response = await axios.post(`${API_BASE_URL}/api/v1/lti/analyze`, {
+        transfer_function: transferFunction 
+      });
+      
+      // The backend's JSON response is used to set the result
+      setResult(response.data);
+
     } catch (err) {
-      setError(t('common.error'));
+      setError(err.response?.data?.detail || t('common.error'));
     } finally {
       setLoading(false);
     }
   };
 
-  const analyzeMockLTI = (tf) => {
-    // Mock analysis based on transfer function patterns
-    const lowerTf = tf.toLowerCase();
-
-    let poles = [-2];
-    let zeros = [];
-    let stability = 'stable';
-    let type = 'firstOrder';
-    let dcGain = 0.5;
-
-    if (lowerTf.includes('1/(s+')) {
-      const match = lowerTf.match(/1\/\(s\+(\d+(?:\.\d+)?)\)/);
-      if (match) {
-        const a = parseFloat(match[1]);
-        poles = [-a];
-        stability = a > 0 ? 'stable' : 'unstable';
-        dcGain = 1 / a;
-        type = 'firstOrder';
-      }
-    } else if (lowerTf.includes('s/(')) {
-      zeros = [0];
-      type = 'firstOrder';
-      dcGain = 0;
-    } else if (lowerTf.includes('(s+')) {
-      // Higher order system
-      poles = [-1, -2];
-      zeros = [-3];
-      type = 'secondOrder';
-      stability = 'stable';
-      dcGain = 0.33;
-    } else if (lowerTf.includes('s^2')) {
-      poles = [0, 0];
-      type = 'secondOrder';
-      stability = 'marginallyStable';
-      dcGain = 0;
-    }
-
-    // Generate frequency response data
-    const frequencyData = generateFrequencyResponse(poles, zeros);
-    const stepResponseData = generateStepResponse(poles, zeros);
-    const impulseResponseData = generateImpulseResponse(poles, zeros);
-
-    return {
-      transferFunction: tf,
-      poles: poles,
-      zeros: zeros,
-      stability: stability,
-      type: type,
-      dcGain: dcGain,
-      frequencyResponse: frequencyData,
-      stepResponse: stepResponseData,
-      impulseResponse: impulseResponseData
-    };
-  };
-
-  const generateFrequencyResponse = (poles, zeros) => {
-    const frequencies = [];
-    const magnitude = [];
-    const phase = [];
-
-    for (let w = -3; w <= 3; w += 0.1) {
-      frequencies.push(w);
-
-      // Mock frequency response calculation
-      let mag = 1;
-      let ph = 0;
-
-      poles.forEach(pole => {
-        const denom = Math.sqrt(Math.pow(w, 2) + Math.pow(pole, 2));
-        mag /= denom;
-        ph -= Math.atan2(w, pole);
-      });
-
-      zeros.forEach(zero => {
-        const num = Math.sqrt(Math.pow(w, 2) + Math.pow(zero, 2));
-        mag *= num;
-        ph += Math.atan2(w, zero);
-      });
-
-      magnitude.push(20 * Math.log10(Math.max(mag, 1e-10))); // Convert to dB
-      phase.push(ph * 180 / Math.PI); // Convert to degrees
-    }
-
-    return { frequencies, magnitude, phase };
-  };
-
-  const generateStepResponse = (poles, zeros) => {
-    const time = [];
-    const response = [];
-
-    for (let t = 0; t <= 10; t += 0.1) {
-      time.push(t);
-
-      // Mock step response
-      let y = 0;
-
-      poles.forEach(pole => {
-        if (pole < 0) {
-          y += (1 / Math.abs(pole)) * (1 - Math.exp(pole * t));
-        } else if (pole === 0) {
-          y += t;
-        } else {
-          y += (1 / Math.abs(pole)) * (Math.exp(pole * t) - 1);
-        }
-      });
-
-      response.push(y);
-    }
-
-    return { time, response };
-  };
-
-  const generateImpulseResponse = (poles, zeros) => {
-    const time = [];
-    const response = [];
-
-    for (let t = 0; t <= 10; t += 0.1) {
-      time.push(t);
-
-      // Mock impulse response
-      let y = 0;
-
-      poles.forEach(pole => {
-        if (pole < 0) {
-          y += Math.exp(pole * t);
-        } else if (pole === 0) {
-          y += t === 0 ? 1 : 0; // Delta function approximation
-        } else {
-          y += Math.exp(pole * t);
-        }
-      });
-
-      response.push(y);
-    }
-
-    return { time, response };
-  };
+  // 4. ALL MOCK FUNCTIONS (analyzeMockLTI, generate...Response) ARE DELETED
+  //    The backend now handles all calculations.
 
   const clearResults = () => {
     setTransferFunction('1/(s+2)');
@@ -175,6 +49,7 @@ const LTIAnalyzer = () => {
   };
 
   const getStabilityBadge = (stability) => {
+    // This helper function remains the same
     switch (stability) {
       case 'stable':
         return <span className="badge bg-success">Stable</span>;
@@ -256,6 +131,7 @@ const LTIAnalyzer = () => {
           </Col>
         </Row>
 
+        {/* This section will now be populated by the REAL backend data */}
         {result && (
           <>
             <Row className="mb-4">
@@ -272,13 +148,6 @@ const LTIAnalyzer = () => {
                             <strong>Transfer Function:</strong>
                             <div className="math-expression mt-2">
                               H(s) = {result.transferFunction}
-                            </div>
-                          </div>
-
-                          <div className="mb-3">
-                            <strong>System Type:</strong>
-                            <div className="mt-1">
-                              {result.type === 'firstOrder' ? 'First Order System' : 'Second Order System'}
                             </div>
                           </div>
 
@@ -338,7 +207,8 @@ const LTIAnalyzer = () => {
                     <h5 className="mb-0">System Responses</h5>
                   </Card.Header>
                   <Card.Body>
-                    <Tabs defaultActiveKey="frequency" className="mb-3">
+                    {/* 5. ADDED 'unmountOnExit' TO FIX THE MOBILE LAYOUT BUG */}
+                    <Tabs defaultActiveKey="frequency" className="mb-3" unmountOnExit>
                       <Tab eventKey="frequency" title={t('plots.frequencyResponse')}>
                         <div className="plot-container">
                           <Plot

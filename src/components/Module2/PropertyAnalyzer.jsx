@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import axios from 'axios';
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Alert,
+  Spinner,
+  Card
+} from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import PropertyCard from './PropertyCard';
+
+// Read the API URL from your .env file
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const PropertyAnalyzer = () => {
   const { t } = useTranslation();
@@ -20,55 +33,17 @@ const PropertyAnalyzer = () => {
     setError('');
 
     try {
-      // For demo purposes, we'll use a mock analysis
-      // In production, this would call the backend API
-      const mockAnalysis = analyzeSystemProperties(equation);
-      setAnalysisResult(mockAnalysis);
+      const response = await axios.post(`${API_BASE_URL}/api/v1/properties/analyze`, {
+        equation_str: equation
+      });
+      
+      setAnalysisResult(response.data);
+
     } catch (err) {
-      setError(t('common.error'));
+      setError(err.response?.data?.detail || t('common.error'));
     } finally {
       setLoading(false);
     }
-  };
-
-  const analyzeSystemProperties = (eq) => {
-    // Mock analysis logic - in production, this would be handled by the backend
-    const lowerEq = eq.toLowerCase();
-
-    return {
-      linearity: {
-        result: !lowerEq.includes('x[') || !lowerEq.includes('^2') && !lowerEq.includes('*x['),
-        explanation: lowerEq.includes('^2')
-          ? 'explanations.nonLinearSquare'
-          : 'explanations.linearSystem'
-      },
-      causality: {
-        result: !lowerEq.includes('x[t+1]') && !lowerEq.includes('x[n+1]'),
-        explanation: lowerEq.includes('x[t+1]') || lowerEq.includes('x[n+1]')
-          ? 'explanations.nonCausalFuture'
-          : 'explanations.causalPastInput'
-      },
-      stability: {
-        result: !lowerEq.includes('t*') && !lowerEq.includes('n*'),
-        explanation: lowerEq.includes('t*') || lowerEq.includes('n*')
-          ? 'explanations.unstableRamp'
-          : 'explanations.stableSystem'
-      },
-      memory: {
-        result: lowerEq.includes('x[t-1]') || lowerEq.includes('y[t-1]') ||
-                lowerEq.includes('x[n-1]') || lowerEq.includes('y[n-1]'),
-        explanation: lowerEq.includes('x[t-1]') || lowerEq.includes('y[t-1]') ||
-                     lowerEq.includes('x[n-1]') || lowerEq.includes('y[n-1]')
-          ? 'explanations.memoryPastInput'
-          : 'explanations.memorylessCurrent'
-      },
-      timeInvariance: {
-        result: !lowerEq.includes('t*') && !lowerEq.includes('n*'),
-        explanation: lowerEq.includes('t*') || lowerEq.includes('n*')
-          ? 'explanations.timeVariant'
-          : 'explanations.timeInvariant'
-      }
-    };
   };
 
   const clearResults = () => {
@@ -82,8 +57,7 @@ const PropertyAnalyzer = () => {
       <div className="module-header">
         <h1 className="module-title">{t('nav.module2')}</h1>
         <p className="module-description">
-          Enter a system equation to analyze its properties such as linearity, causality,
-          stability, memory, and time invariance.
+          {t('module2.description', 'Enter a system equation to analyze its properties.')} 
         </p>
       </div>
 
@@ -102,11 +76,11 @@ const PropertyAnalyzer = () => {
                       type="text"
                       value={equation}
                       onChange={(e) => setEquation(e.target.value)}
-                      placeholder="e.g., y(t) = 2*x(t) + 1"
+                      placeholder={t('module2.placeholder', 'e.g., y(t) = 2*x(t) + 1')}
                       className="text-center"
                     />
                     <Form.Text className="text-muted">
-                      Example: y(t) = 2*x(t) + 1, y[n] = x[n]^2, y(t) = t*x(t)
+                      {t('module2.example', 'Example: y[n] = x[n]^2, y(t) = t*x(t)')}
                     </Form.Text>
                   </Form.Group>
 
@@ -151,36 +125,41 @@ const PropertyAnalyzer = () => {
             <Col>
               <PropertyCard
                 property="linearity"
-                result={analysisResult.linearity.result}
-                explanation={analysisResult.linearity.explanation}
+                // Fixed: Matches LinearityResult schema
+                result={analysisResult.linearity.is_linear}
+                explanation={analysisResult.linearity.reason_key}
               />
             </Col>
             <Col>
               <PropertyCard
                 property="causality"
-                result={analysisResult.causality.result}
-                explanation={analysisResult.causality.explanation}
+                // Fixed: Matches CausalityResult schema
+                result={analysisResult.causality.is_causal}
+                explanation={analysisResult.causality.reason_key}
               />
             </Col>
             <Col>
               <PropertyCard
                 property="stability"
-                result={analysisResult.stability.result}
-                explanation={analysisResult.stability.explanation}
+                // Fixed: Matches StabilityResult schema
+                result={analysisResult.stability.is_stable}
+                explanation={analysisResult.stability.reason_key}
               />
             </Col>
             <Col>
               <PropertyCard
                 property="memory"
-                result={analysisResult.memory.result}
-                explanation={analysisResult.memory.explanation}
+                // Fixed: Matches MemoryResult schema
+                result={analysisResult.memory.has_memory}
+                explanation={analysisResult.memory.reason_key}
               />
             </Col>
             <Col>
               <PropertyCard
                 property="timeInvariance"
-                result={analysisResult.timeInvariance.result}
-                explanation={analysisResult.timeInvariance.explanation}
+                // FIXED: Uses snake_case 'time_invariance' to match backend JSON
+                result={analysisResult.time_invariance.is_invariant}
+                explanation={analysisResult.time_invariance.reason_key}
               />
             </Col>
           </Row>

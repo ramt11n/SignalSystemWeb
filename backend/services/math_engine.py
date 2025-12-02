@@ -6,49 +6,45 @@ import re
 
 class MathEngine:
     def __init__(self):
-        # Define symbols and functions for parsing
         self.t, self.s = sp.symbols('t s')
         self.n, self.z = sp.symbols('n z')
+        self.x = sp.Function('x')
+        self.y = sp.Function('y')
 
-        # Create local dictionary for safe expression parsing
         self.local_dict = {
-            't': self.t,
-            's': self.s,
-            'n': self.n,
-            'z': self.z,
-            'u': sp.Heaviside,  # Unit step function
-            'delta': sp.DiracDelta,  # Impulse function
-            'exp': sp.exp,
-            'sin': sp.sin,
-            'cos': sp.cos,
-            'tan': sp.tan,
-            'log': sp.log,
-            'sqrt': sp.sqrt,
-            'pi': sp.pi,
-            'e': sp.E
+            't': self.t, 's': self.s, 'n': self.n, 'z': self.z,
+            'u': sp.Heaviside, 'delta': sp.DiracDelta,
+            'exp': sp.exp, 'sin': sp.sin, 'cos': sp.cos, 'tan': sp.tan,
+            'log': sp.log, 'sqrt': sp.sqrt, 'pi': sp.pi, 'e': sp.E,
+            'Heaviside': sp.Heaviside, 'DiracDelta': sp.DiracDelta,
+            'x': self.x, 'y': self.y
         }
+        
+        self.numerical_modules = [
+            "numpy",
+            { "Heaviside": lambda x: np.heaviside(x, 1), "DiracDelta": lambda x: np.where(x == 0, 1, 0) }
+        ]
 
     def safe_parse_expression(self, expr_str: str) -> sp.Expr:
-        """Safely parse a mathematical expression string into a SymPy object."""
         try:
-            # Replace common function names
-            expr_str = expr_str.replace('u(t)', 'Heaviside(t)')
-            expr_str = expr_str.replace('δ(t)', 'DiracDelta(t)')
-            expr_str = expr_str.replace('delta(t)', 'DiracDelta(t)')
+            # FIX: Handle equations by taking the right side
+            if "=" in expr_str:
+                expr_str = expr_str.split("=")[1]
 
-            # Parse the expression
-            expr = sp.parse_expr(expr_str, local_dict=self.local_dict)
+            expr_str = expr_str.replace('[', '(').replace(']', ')')
+            expr_str = expr_str.replace('^', '**')
+            expr_str = re.sub(r'u\((.*?)\)', r'Heaviside(\1)', expr_str)
+            expr_str = re.sub(r'δ\((.*?)\)', r'DiracDelta(\1)', expr_str)
+            expr_str = re.sub(r'delta\((.*?)\)', r'DiracDelta(\1)', expr_str)
+
+            expr = sp.parse_expr(expr_str, local_dict=self.local_dict, evaluate=False)
             return expr
         except Exception as e:
             raise ValueError(f"Invalid expression: {expr_str}. Error: {str(e)}")
 
     def analyze_system_properties(self, equation_str: str) -> Dict[str, Any]:
-        """Analyze system properties from a system equation."""
         try:
-            # Parse the equation
-            equation = self.safe_parse_expression(equation_str)
-
-            # Initialize results
+            # Initialize results with defaults
             results = {
                 'linearity': {'is_linear': True, 'reason_key': 'explanations.linearSystem'},
                 'causality': {'is_causal': True, 'reason_key': 'explanations.causalPastInput'},
@@ -56,177 +52,105 @@ class MathEngine:
                 'memory': {'has_memory': False, 'reason_key': 'explanations.memorylessCurrent'},
                 'time_invariance': {'is_invariant': True, 'reason_key': 'explanations.timeInvariant'}
             }
+            
+            expr = self.safe_parse_expression(equation_str)
+            eq_str = str(expr).lower()
+            
+            # Linearity
+            if ('x(' in eq_str) and ('**' in eq_str or '*' in eq_str):
+                if "x" in eq_str.split('*')[-1] or '**' in eq_str: 
+                    results['linearity']['is_linear'] = False
+                    results['linearity']['reason_key'] = 'explanations.nonLinearSquare'
 
-            # Convert to string for analysis
-            eq_str = str(equation).lower()
-
-            # Check linearity
-            if 'x[' in eq_str and ('^2' in eq_str or '**2' in eq_str or '*' in eq_str):
-                results['linearity']['is_linear'] = False
-                results['linearity']['reason_key'] = 'explanations.nonLinearSquare'
-
-            # Check causality (look for future inputs)
-            if 'x[t+1]' in eq_str or 'x[n+1]' in eq_str or 'x[t+2]' in eq_str:
+            # Causality
+            if 't + ' in eq_str or 'n + ' in eq_str:
                 results['causality']['is_causal'] = False
                 results['causality']['reason_key'] = 'explanations.nonCausalFuture'
 
-            # Check memory (look for past inputs)
-            if 'x[t-1]' in eq_str or 'x[n-1]' in eq_str or 'y[t-1]' in eq_str:
+            # Memory
+            if 't - ' in eq_str or 'n - ' in eq_str or 't + ' in eq_str or 'n + ' in eq_str:
                 results['memory']['has_memory'] = True
                 results['memory']['reason_key'] = 'explanations.memoryPastInput'
 
-            # Check time invariance
+            # Time Invariance
             if 't*' in eq_str or 'n*' in eq_str:
                 results['time_invariance']['is_invariant'] = False
                 results['time_invariance']['reason_key'] = 'explanations.timeVariant'
 
-            # Check stability (simplified check)
-            if 't*' in eq_str or 'n*' in eq_str or 'ramp' in eq_str:
+            # Stability
+            if 't*' in eq_str or 'n*' in eq_str or 'exp(t)' in eq_str:
                 results['stability']['is_stable'] = False
                 results['stability']['reason_key'] = 'explanations.unstableRamp'
 
             return results
 
         except Exception as e:
-            raise ValueError(f"Error analyzing system properties: {str(e)}")
+            raise ValueError(f"Error analyzing properties: {str(e)}")
 
+    # ... (Keep your existing laplace_transform, inverse, convolution, and lti methods below) ...
+    # (I am not repeating them here to save space, but DO NOT DELETE THEM)
     def laplace_transform(self, expr_str: str) -> Dict[str, Any]:
-        """Calculate the Laplace transform of a time-domain expression."""
+        # ... paste your existing laplace_transform code here ...
+        # (Or just keep the file as it was and only update safe_parse_expression and analyze_system_properties)
         try:
-            # Parse the expression
             expr = self.safe_parse_expression(expr_str)
-
-            # Calculate Laplace transform
-            laplace_expr, convergence_cond, _ = sp.laplace_transform(expr, self.t, self.s)
-
-            # Get poles and zeros
-            poles = []
-            zeros = []
-
-            # Find poles (denominator roots)
-            if laplace_expr.is_Mul:
-                numerator, denominator = laplace_expr.as_numer_denom()
-                poles = sp.nroots(denominator)
-                zeros = sp.nroots(numerator) if numerator != 1 else []
-
-            # Convert to list of floats (real parts only for simplicity)
-            poles_list = [float(pole.as_real_imag()[0]) for pole in poles if pole.is_real]
-            zeros_list = [float(zero.as_real_imag()[0]) for zero in zeros if zero.is_real]
-
+            laplace_expr, convergence_cond, _ = sp.laplace_transform(expr, self.t, self.s, noconds=False)
+            laplace_expr = laplace_expr.simplify()
+            numerator, denominator = laplace_expr.as_numer_denom()
+            poles = sp.solve(denominator, self.s)
+            zeros = sp.solve(numerator, self.s)
+            poles_list = [str(p.evalf()) for p in poles]
+            zeros_list = [str(z.evalf()) for z in zeros]
             return {
                 'input_t': expr_str,
                 'output_s': str(laplace_expr),
-                'roc': str(convergence_cond) if convergence_cond != True else "All s",
+                'roc': str(convergence_cond if convergence_cond is not True else "All s"),
                 'poles': poles_list,
                 'zeros': zeros_list
             }
-
         except Exception as e:
             raise ValueError(f"Error calculating Laplace transform: {str(e)}")
 
     def inverse_laplace_transform(self, expr_str: str, is_causal: bool = True) -> Dict[str, Any]:
-        """Calculate the inverse Laplace transform with step-by-step solution."""
         try:
-            # Parse the expression
             expr = self.safe_parse_expression(expr_str)
-
-            # Calculate inverse Laplace transform
+            expr = expr.simplify()
             inverse_expr = sp.inverse_laplace_transform(expr, self.s, self.t)
-
-            # Generate step-by-step solution
             steps = []
-
-            # Analyze the form and generate appropriate steps
-            expr_str_lower = expr_str.lower()
-
-            if '1/(s+' in expr_str_lower:
-                match = re.search(r'1/\(s\+(\d+(?:\.\d+)?)\)', expr_str_lower)
-                if match:
-                    a = match.group(1)
-                    steps = [
-                        {'step': 'Identify form', 'value': '1/(s + a)'},
-                        {'step': 'Lookup table', 'value': 'exp(-at)·u(t)'},
-                        {'step': f'Substitute a', 'value': f'a = {a}'},
-                        {'step': 'Final result', 'value': str(inverse_expr)}
-                    ]
-
-            elif expr_str_lower == '1/s':
-                steps = [
-                    {'step': 'Identify form', 'value': '1/s'},
-                    {'step': 'Lookup table', 'value': 'u(t)'},
-                    {'step': 'Final result', 'value': str(inverse_expr)}
-                ]
-
-            elif '1/s^2' in expr_str_lower:
-                steps = [
-                    {'step': 'Identify form', 'value': '1/s²'},
-                    {'step': 'Lookup table', 'value': 't·u(t)'},
-                    {'step': 'Final result', 'value': str(inverse_expr)}
-                ]
-
-            else:
-                # Generic steps
-                steps = [
-                    {'step': 'Input expression', 'value': expr_str},
-                    {'step': 'Apply inverse Laplace transform', 'value': str(inverse_expr)}
-                ]
-
-            # Apply causality if specified
+            try:
+                partial_frac = expr.apart(self.s)
+                steps.append({'step': 'Partial Fraction Expansion', 'value': str(partial_frac)})
+                for term in partial_frac.args if partial_frac.is_Add else [partial_frac]:
+                    term_inv = sp.inverse_laplace_transform(term, self.s, self.t)
+                    steps.append({'step': f'Inverse of {term}', 'value': str(term_inv)})
+            except Exception:
+                steps.append({'step': 'Input expression', 'value': str(expr)})
+            steps.append({'step': 'Final Sum', 'value': str(inverse_expr)})
             final_expr = str(inverse_expr)
-            if is_causal and 'Heaviside(t)' not in final_expr:
-                final_expr += '*Heaviside(t)'
-
+            if is_causal and 'Heaviside(t)' not in final_expr and 'DiracDelta' not in final_expr:
+                final_expr = f"({final_expr})*Heaviside(t)"
             return {
                 'input_s': expr_str,
                 'output_t': final_expr,
                 'steps': steps,
                 'is_causal': is_causal
             }
-
         except Exception as e:
             raise ValueError(f"Error calculating inverse Laplace transform: {str(e)}")
 
     def calculate_convolution(self, signal_x: str, signal_h: str) -> Dict[str, Any]:
-        """Calculate the convolution of two signals."""
         try:
-            # Parse signals
             x_expr = self.safe_parse_expression(signal_x)
             h_expr = self.safe_parse_expression(signal_h)
-
-            # Generate numerical arrays for plotting
-            time_array = np.linspace(-5, 5, 200)
-
-            # Evaluate signals numerically
-            x_values = []
-            h_values = []
-
-            for t_val in time_array:
-                try:
-                    # Substitute numerical values
-                    x_val = float(x_expr.subs(self.t, t_val).evalf())
-                    h_val = float(h_expr.subs(self.t, t_val).evalf())
-
-                    # Handle Heaviside function
-                    if np.isnan(x_val) or np.isinf(x_val):
-                        x_val = 0
-                    if np.isnan(h_val) or np.isinf(h_val):
-                        h_val = 0
-
-                    x_values.append(x_val)
-                    h_values.append(h_val)
-                except:
-                    x_values.append(0)
-                    h_values.append(0)
-
-            # Calculate convolution numerically
-            output_values = np.convolve(x_values, h_values, mode='full')
-
-            # Create symmetric time array for convolution result
-            conv_time = np.linspace(-10, 10, len(output_values))
-
-            # Generate symbolic result (simplified)
+            time_array = np.linspace(-5, 10, 400)
+            dt = time_array[1] - time_array[0]
+            x_func = sp.lambdify(self.t, x_expr, self.numerical_modules)
+            h_func = sp.lambdify(self.t, h_expr, self.numerical_modules)
+            x_values = x_func(time_array)
+            h_values = h_func(time_array)
+            output_values = scipy_signal.convolve(x_values, h_values, mode='full') * dt
+            conv_time = np.linspace(time_array[0]*2, time_array[-1]*2, len(output_values))
             symbolic_result = f"({signal_x}) * ({signal_h})"
-
             return {
                 'signal_x': signal_x,
                 'signal_h': signal_h,
@@ -234,77 +158,48 @@ class MathEngine:
                 'output_y_array': output_values.tolist(),
                 'symbolic_result': symbolic_result
             }
-
         except Exception as e:
             raise ValueError(f"Error calculating convolution: {str(e)}")
 
     def analyze_lti_system(self, transfer_function: str) -> Dict[str, Any]:
-        """Analyze LTI system from transfer function."""
         try:
-            # Parse transfer function
             tf_expr = self.safe_parse_expression(transfer_function)
-
-            # Find poles and zeros
-            poles = []
-            zeros = []
-
-            if tf_expr.is_Mul:
-                numerator, denominator = tf_expr.as_numer_denom()
-                poles = sp.nroots(denominator)
-                zeros = sp.nroots(numerator) if numerator != 1 else []
-
-            # Extract poles and zeros as lists
-            poles_list = [float(pole.as_real_imag()[0]) for pole in poles if pole.is_real]
-            zeros_list = [float(zero.as_real_imag()[0]) for zero in zeros if zero.is_real]
-
-            # Determine stability
+            tf_expr = tf_expr.simplify()
+            numerator, denominator = tf_expr.as_numer_denom()
+            poles = sp.solve(denominator, self.s)
+            zeros = sp.solve(numerator, self.s)
+            poles_list = [str(p.evalf()) for p in poles]
+            zeros_list = [str(z.evalf()) for z in zeros]
             stability = 'stable'
-            if any(pole > 0 for pole in poles_list):
-                stability = 'unstable'
-            elif any(pole == 0 for pole in poles_list):
-                stability = 'marginallyStable'
-
-            # Determine system type
-            system_type = 'firstOrder' if len(poles_list) == 1 else 'secondOrder'
-
-            # Calculate DC gain
+            if not poles:
+                stability = 'stable'
+            else:
+                real_poles = [sp.re(p.evalf()) for p in poles]
+                if any(p > 0 for p in real_poles):
+                    stability = 'unstable'
+                elif any(p == 0 for p in real_poles) and max(real_poles) <= 0:
+                    stability = 'marginallyStable'
+            system_type = f"{len(poles)}-order"
             dc_gain = 0
             try:
-                dc_gain = float(tf_expr.subs(self.s, 0).evalf())
-            except:
+                dc_gain = float(sp.limit(tf_expr, self.s, 0).evalf())
+            except Exception:
                 dc_gain = 0
-
-            # Generate frequency response data
             frequencies = np.logspace(-2, 2, 100)
-            magnitude = []
-            phase = []
-
-            for w in frequencies:
-                try:
-                    # Evaluate transfer function at s = jw
-                    s_val = 1j * w
-                    tf_val = complex(tf_expr.subs(self.s, s_val).evalf())
-
-                    magnitude.append(20 * np.log10(abs(tf_val)))
-                    phase.append(np.angle(tf_val, deg=True))
-                except:
-                    magnitude.append(-100)  # Very low value
-                    phase.append(0)
-
-            # Generate step response
+            tf_func_numeric = sp.lambdify(self.s, tf_expr, 'numpy')
+            w_vals = 1j * frequencies
+            tf_vals = tf_func_numeric(w_vals)
+            magnitude = (20 * np.log10(np.abs(tf_vals))).tolist()
+            phase = (np.angle(tf_vals, deg=True)).tolist()
             step_time = np.linspace(0, 10, 100)
-            step_response = []
-
-            for t_val in step_time:
-                # Simplified step response calculation
-                response = 0
-                for pole in poles_list:
-                    if pole < 0:
-                        response += (1/abs(pole)) * (1 - np.exp(pole * t_val))
-                    elif pole == 0:
-                        response += t_val
-                step_response.append(response)
-
+            X_step = 1/self.s
+            Y_step_s = (tf_expr * X_step).simplify()
+            step_resp_t = sp.inverse_laplace_transform(Y_step_s, self.s, self.t)
+            step_func = sp.lambdify(self.t, step_resp_t, self.numerical_modules)
+            step_response_values = step_func(step_time)
+            impulse_resp_t = sp.inverse_laplace_transform(tf_expr, self.s, self.t)
+            impulse_func = sp.lambdify(self.t, impulse_resp_t, self.numerical_modules)
+            impulse_response_values = impulse_func(step_time)
             return {
                 'transfer_function': transfer_function,
                 'poles': poles_list,
@@ -314,17 +209,19 @@ class MathEngine:
                 'dcGain': dc_gain,
                 'frequencyResponse': {
                     'frequencies': frequencies.tolist(),
-                    'magnitude': magnitude,
-                    'phase': phase
+                    'magnitude': [float(m) for m in magnitude],
+                    'phase': [float(p) for p in phase]
                 },
                 'stepResponse': {
                     'time': step_time.tolist(),
-                    'response': step_response
+                    'response': [float(r) for r in step_response_values]
+                },
+                'impulseResponse': {
+                    'time': step_time.tolist(),
+                    'response': [float(r) for r in impulse_response_values]
                 }
             }
-
         except Exception as e:
-            raise ValueError(f"Error analyzing LTI system: {str(e)}")
+            raise ValueError(f"Error analyzing LTI system: {str(e)} on line {e.__traceback__.tb_lineno}")
 
-# Create a singleton instance
 math_engine = MathEngine()
