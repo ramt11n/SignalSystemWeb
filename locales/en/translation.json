@@ -1,6 +1,8 @@
 {
   "nav": {
     "title": "Signal Companion",
+    "brandMain": "Signal",
+    "brandSub": "Companion",
     "module1": "Signal Library",
     "module2": "Property Analyzer",
     "module3": "Convolution Engine",
@@ -11,6 +13,11 @@
   "sidebar": {
     "modules": "Modules",
     "language": "Language"
+  },
+  "module2": {
+    "description": "Enter a system equation to analyze its properties such as linearity, causality, stability, memory, and time invariance.",
+    "placeholder": "e.g., y(t) = 2*x(t) + 1",
+    "example": "Example: y[n] = x[n]^2, y(t) = t*x(t)"
   },
   "properties": {
     "linearity": "Linearity",
@@ -34,13 +41,16 @@
     "timeVariant": "Time Variant"
   },
   "explanations": {
-    "nonLinearSquare": "The system is non-linear because the x[n]^2 term violates the additivity principle.",
+    "linearSystem": "The system appears to be linear.",
+    "nonLinearSquare": "The system is non-linear because a term like x[n]^2 or x(t)*x(t) violates the additivity principle.",
     "causalPastInput": "The system is causal because output depends only on past and present inputs.",
-    "unstableRamp": "The system is unstable because the ramp function grows without bound.",
-    "memoryPastInput": "The system has memory because output depends on past input values.",
-    "memorylessCurrent": "The system is memoryless because output depends only on current input.",
-    "timeInvariant": "The system is time-invariant because time shifts in input produce identical shifts in output.",
-    "timeVariant": "The system is time-variant because the system parameters change with time."
+    "nonCausalFuture": "The system is non-causal because the output depends on a future input (e.g., x[n+1]).",
+    "stableSystem": "The system appears to be stable (Bounded-Input, Bounded-Output).",
+    "unstableRamp": "The system is unstable because a term like t*x(t) will cause the output to grow without bound for a bounded input.",
+    "memoryPastInput": "The system has memory because output depends on past input values (e.g., x[n-1]).",
+    "memorylessCurrent": "The system is memoryless because output depends only on the current input (e.g., x[n]).",
+    "timeInvariant": "The system is time-invariant because its behavior does not change over time.",
+    "timeVariant": "The system is time-variant because a coefficient depends on time (e.g., t*x(t)), so a shift in input does not produce an identical shift in output."
   },
   "buttons": {
     "calculate": "Calculate",
